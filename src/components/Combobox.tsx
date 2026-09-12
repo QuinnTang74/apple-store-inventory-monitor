@@ -72,8 +72,10 @@ export function Combobox({
         // 字（「MacBook Pro 16 英寸 M5 Max 芯片 18 核中央处理器、40 核图形处理器
         // 标准显示屏 深空黑色」），面板要是跟触发器一样宽，被截掉的正好是区分
         // 两台机器的那半句 —— 用户面对两条看起来一模一样的选项只能猜。
-        className="w-auto min-w-(--radix-popover-trigger-width) max-w-[min(90vw,42rem)] p-0"
+        className="max-h-(--radix-popover-content-available-height) w-auto min-w-(--radix-popover-trigger-width) max-w-[min(calc(100vw-2rem),42rem)] overflow-hidden overscroll-contain p-0"
         align="start"
+        sideOffset={6}
+        collisionPadding={8}
       >
         <Command>
           <CommandInput placeholder={searchPlaceholder} className="select-text" />

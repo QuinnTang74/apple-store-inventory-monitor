@@ -114,7 +114,7 @@ function StatusBadge({ availability, pickupDetails }: { availability: Availabili
   const badge = (
     <Badge
       variant="outline"
-      className={`h-7 min-w-20 justify-center gap-2 px-2.5 font-medium ${TONE_CLASS[tone]}`}
+      className={`h-8 min-w-0 justify-center gap-2 px-2.5 font-medium md:h-7 md:min-w-20 ${TONE_CLASS[tone]}`}
     >
       <span className={`size-1.5 rounded-full ${TONE_DOT[tone]}`} aria-hidden="true" />
       {label}
@@ -122,12 +122,18 @@ function StatusBadge({ availability, pickupDetails }: { availability: Availabili
   );
   if (!detail) return badge;
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="cursor-help">{badge}</span>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-90">{detail}</TooltipContent>
-    </Tooltip>
+    // items-stretch（默认）而不是 items-start：后者会把状态明细改成按 max-content 定宽，
+    // 超长中文不换行直接撑出 600+px，把卡片拖出横向滚动条。
+    <div className="flex flex-col gap-1.5 md:block">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="cursor-help">{badge}</span>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-90">{detail}</TooltipContent>
+      </Tooltip>
+      {/* Tooltip 只在 hover/focus 时打开，触屏永远拿不到；窄屏把明细直接铺出来。 */}
+      <span className="text-xs leading-5 text-muted-foreground md:hidden">{detail}</span>
+    </div>
   );
 }
 
@@ -257,15 +263,17 @@ export default function App() {
   return (
     <TooltipProvider delayDuration={180}>
       <div className="app-canvas min-h-screen text-foreground">
-        <main className="mx-auto flex min-h-screen w-full max-w-[1180px] flex-col gap-4 px-5 py-5 lg:h-screen lg:overflow-hidden">
-          <header className="surface-panel flex shrink-0 items-center justify-between gap-5 px-5 py-4">
+        <main className="mx-auto flex min-h-dvh w-full min-w-0 max-w-[1180px] flex-col gap-3 px-4 py-4 sm:gap-4 sm:px-5 sm:py-5 lg:h-screen lg:overflow-hidden">
+          {/* 窄屏两行（标题 / 状态+操作），≥640px 回到单行左右布局：390px 下右侧组
+              实测占 258px，单行会把左标题压到 32px，只剩「果…」。 */}
+          <header className="surface-panel flex shrink-0 flex-col items-stretch gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:px-5 sm:py-4">
             <div className="flex min-w-0 items-center gap-3.5">
               <div className="brand-mark" aria-hidden="true">
                 <Radar className="size-5" strokeWidth={1.8} />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="truncate text-lg font-semibold tracking-[-0.02em]">
+                  <h1 className="whitespace-nowrap text-lg font-semibold tracking-[-0.02em]">
                     果到雷达
                   </h1>
                   <Badge variant="outline" className="hidden border-primary/20 bg-primary/8 text-primary sm:inline-flex">
@@ -278,26 +286,26 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2.5">
-              <div className="status-pill" role="status" aria-live="polite">
+            <div className="flex w-full items-center justify-between gap-2.5 sm:w-auto sm:justify-normal">
+              <div className="status-pill min-w-0 flex-1 sm:flex-none" role="status" aria-live="polite">
                 <span
                   className={`size-2 rounded-full ${ui.running ? "bg-in-stock shadow-[0_0_12px_var(--in-stock)]" : "bg-muted-foreground/55"}`}
                   aria-hidden="true"
                 />
-                <span className="hidden text-xs text-muted-foreground sm:inline">监控状态</span>
-                <span className="text-sm font-medium">{ui.running ? runningLabel : "已暂停"}</span>
+                <span className="text-xs text-muted-foreground max-sm:sr-only">监控状态</span>
+                <span className="text-sm font-medium tabular-nums">{ui.running ? runningLabel : "已暂停"}</span>
               </div>
               {ui.running ? (
                 <Button
                   variant="secondary"
-                  className="h-10 rounded-xl px-4"
+                  className="h-11 shrink-0 rounded-xl px-4 sm:h-10"
                   onClick={() => void stopWatching()}
                 >
                   <Pause aria-hidden="true" /> 暂停
                 </Button>
               ) : (
                 <Button
-                  className="h-10 rounded-xl px-4 shadow-[0_8px_24px_-12px_var(--primary)]"
+                  className="h-11 shrink-0 rounded-xl px-4 shadow-[0_8px_24px_-12px_var(--primary)] sm:h-10"
                   onClick={() => void startWatching()}
                   disabled={ui.rows.length === 0}
                 >
@@ -337,14 +345,14 @@ export default function App() {
                   </div>
                 )}
                 {ui.updateError !== null && <p className="break-words text-destructive" role="alert">{ui.updateError}</p>}
-                <div className="mt-1.5 flex items-center gap-2">
-                  <Button size="sm" disabled={ui.installing || ui.updateInstalled} onClick={() => void installUpdate()}>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <Button className="h-10 sm:h-8" size="sm" disabled={ui.installing || ui.updateInstalled} onClick={() => void installUpdate()}>
                     {ui.updateInstalled ? "已安装" : ui.installing ? "正在更新…" : ui.updateError ? "重试" : "下载并安装"}
                   </Button>
                   {ui.updateError !== null && (
-                    <Button size="sm" variant="outline" onClick={() => void openReleasePage()}>下载安装包</Button>
+                    <Button className="h-10 sm:h-8" size="sm" variant="outline" onClick={() => void openReleasePage()}>下载安装包</Button>
                   )}
-                  <Button size="sm" variant="ghost" disabled={ui.installing} onClick={dismissUpdate}>
+                  <Button className="h-10 sm:h-8" size="sm" variant="ghost" disabled={ui.installing} onClick={dismissUpdate}>
                     <X aria-hidden="true" /> 稍后
                   </Button>
                 </div>
@@ -352,11 +360,14 @@ export default function App() {
             </Alert>
           )}
 
-          <div className="grid min-h-0 flex-1 gap-4 min-[980px]:grid-cols-[minmax(0,1.65fr)_20rem]">
-            <div className="flex min-h-0 flex-col gap-4">
-              <section className="surface-panel shrink-0 p-4" aria-labelledby="create-monitor-title">
-                <div className="mb-4 flex items-start justify-between gap-4">
-                  <div>
+          {/* grid-cols-1 是必须的：<980px 时若没有显式列定义，隐式 auto 轨道的最小尺寸
+              等于子项 min-content（表格链路实测 684px），轨道比容器宽就向右溢出。
+              grid-cols-1 展开为 minmax(0,1fr)，把轨道最小值钉成 0。 */}
+          <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 gap-4 min-[980px]:grid-cols-[minmax(0,1.65fr)_20rem]">
+            <div className="flex min-h-0 min-w-0 flex-col gap-4">
+              <section className="surface-panel min-w-0 shrink-0 p-3 sm:p-4" aria-labelledby="create-monitor-title">
+                <div className="mb-4 flex min-w-0 items-start justify-between gap-4">
+                  <div className="min-w-0">
                     <div className="eyebrow">
                       <Plus className="size-3.5" aria-hidden="true" /> 新建监控
                     </div>
@@ -365,13 +376,13 @@ export default function App() {
                     </h2>
                   </div>
                   {hasCompleteSelection && (
-                    <Badge className="border-primary/20 bg-primary/10 text-primary" variant="outline">
+                    <Badge className="shrink-0 border-primary/20 bg-primary/10 text-primary" variant="outline">
                       {storeNumbers.length} × {partNumbers.length}
                     </Badge>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-[0.9fr_0.9fr_1.3fr_2fr]">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[0.9fr_0.9fr_1.3fr_2fr]">
                   <div className="field-group">
                     <Label className="control-label">
                       <MapPin className="size-3.5" aria-hidden="true" /> 地区
@@ -450,30 +461,32 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border/55 pt-3">
+                <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-3 border-t border-border/55 pt-3">
                   <p className="min-w-0 flex-1 text-xs leading-5 text-muted-foreground" role="status">
                     {hasCompleteSelection
                       ? `将新增 ${pendingTargets.length} 条监控${duplicateCount > 0 ? `，跳过 ${duplicateCount} 条已有组合` : ""}`
                       : "选择门店和型号后，系统会按全部组合创建监控。"}
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex w-full items-center gap-2 sm:w-auto">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="outline"
                           size="icon-lg"
-                          className="rounded-xl border-border/70 bg-background/40"
+                          className="h-11 w-auto shrink-0 gap-1.5 rounded-xl border-border/70 bg-background/40 px-3 sm:h-10 sm:w-10 sm:px-0"
                           aria-label="从 Apple 官网更新当前品类的型号列表"
                           disabled={ui.refreshing}
                           onClick={() => void refreshProducts()}
                         >
                           <RefreshCw className={ui.refreshing ? "animate-spin" : undefined} />
+                          {/* 这个按钮原本只靠 Tooltip 表意，触屏看不到 Tooltip，窄屏直接给文字。 */}
+                          <span className="text-xs sm:hidden">更新型号</span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>从 Apple 官网更新当前品类的型号列表</TooltipContent>
                     </Tooltip>
                     <Button
-                      className="h-10 min-w-28 rounded-xl px-4"
+                      className="h-11 min-w-0 flex-1 rounded-xl px-4 sm:h-10 sm:min-w-28 sm:flex-none"
                       onClick={() => void onAdd()}
                       disabled={!canAdd}
                     >
@@ -490,25 +503,31 @@ export default function App() {
                 </div>
               </section>
 
-              <section className="surface-panel flex min-h-[280px] flex-1 flex-col overflow-hidden" aria-labelledby="monitor-list-title">
-                <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-4 py-3.5">
-                  <div className="flex items-center gap-3">
+              <section className="surface-panel flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden lg:min-h-0" aria-labelledby="monitor-list-title">
+                <div className="flex min-w-0 shrink-0 items-center justify-between border-b border-border/60 px-4 py-3.5">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="section-icon" aria-hidden="true">
                       <Activity className="size-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h2 id="monitor-list-title" className="text-sm font-semibold">监控列表</h2>
-                      <p className="mt-0.5 text-xs text-muted-foreground">新款优先 · 库存变化实时更新</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">新款优先 · 库存变化实时更新</p>
                     </div>
                   </div>
-                  <span className="rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-xs tabular-nums text-muted-foreground">
+                  <span className="shrink-0 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-xs tabular-nums text-muted-foreground">
                     {ui.rows.length} 项
                   </span>
                 </div>
 
-                <ScrollArea className="min-h-0 flex-1">
-                  <Table>
-                    <TableHeader className="sticky top-0 z-10 bg-card/95">
+                {/* 滚动容器交给 Table 自带的 table-container（它才是 thead 的最近滚动容器）：
+                    原先外面套 ScrollArea，而 radix 的 viewport 是 overflow-x:hidden + 内层
+                    display:table，既不可能横向滚动，也让表格自带的 overflow-x-auto 被架空，
+                    连带 sticky 表头一直没生效。容器拿到高度后，横滚、纵滚、吸附三项一起成立。 */}
+                <Table
+                  containerClassName="min-h-0 flex-1 overflow-auto overscroll-contain"
+                  className="block md:table md:min-w-[36rem]"
+                >
+                  <TableHeader className="sticky top-0 z-10 hidden bg-card/95 md:table-header-group">
                       <TableRow className="hover:bg-transparent">
                         <TableHead className="w-28 px-4 text-xs text-muted-foreground">状态</TableHead>
                         <TableHead className="px-3 text-xs text-muted-foreground">门店</TableHead>
@@ -517,10 +536,10 @@ export default function App() {
                         <TableHead className="w-14" />
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody className="block md:table-row-group">
                       {ui.rows.length === 0 ? (
-                        <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={5} className="h-44 text-center">
+                        <TableRow className="block hover:bg-transparent md:table-row">
+                          <TableCell colSpan={5} className="block h-44 text-center md:table-cell">
                             <div className="mx-auto flex max-w-xs flex-col items-center">
                               <div className="mb-3 flex size-11 items-center justify-center rounded-2xl border border-border/60 bg-muted/35 text-muted-foreground">
                                 <Radar className="size-5" aria-hidden="true" />
@@ -536,10 +555,10 @@ export default function App() {
                         </TableRow>
                       ) : (
                         sortedRows.map((row) => (
-                          <TableRow key={targetKey(row.target)} className="group h-14 hover:bg-muted/22">
-                            <TableCell className="px-4"><StatusBadge availability={row.availability} pickupDetails={row.pickupDetails} /></TableCell>
-                            <TableCell className="px-3 font-medium">{row.target.storeTitle}</TableCell>
-                            <TableCell className="max-w-[24rem] truncate px-3 text-muted-foreground" title={row.target.productName}>
+                          <TableRow key={targetKey(row.target)} className="group flex flex-col gap-1.5 px-4 py-3.5 hover:bg-muted/22 md:table-row md:h-14 md:gap-0 md:px-0 md:py-0">
+                            <TableCell className="block px-0 py-0.5 md:table-cell md:px-4 md:py-0"><StatusBadge availability={row.availability} pickupDetails={row.pickupDetails} /></TableCell>
+                            <TableCell className="block px-0 py-0.5 font-medium md:table-cell md:px-3 md:py-0">{row.target.storeTitle}</TableCell>
+                            <TableCell className="block max-w-none px-0 py-0.5 break-words whitespace-normal text-muted-foreground md:table-cell md:max-w-[24rem] md:truncate md:px-3 md:py-0 md:whitespace-nowrap" title={row.target.productName}>
                               <button
                                 className="text-left hover:text-primary hover:underline"
                                 aria-label={`打开商品页：${row.target.productName}`}
@@ -548,14 +567,15 @@ export default function App() {
                                 {row.target.productName}
                               </button>
                             </TableCell>
-                            <TableCell className="px-3 font-mono text-xs tabular-nums text-muted-foreground">
+                            <TableCell className="block px-0 py-0.5 font-mono text-xs tabular-nums text-muted-foreground md:table-cell md:px-3 md:py-0">
+                              <span className="font-sans md:hidden">最后检查 </span>
                               {formatTime(row.lastCheckedMs)}
                             </TableCell>
-                            <TableCell className="pr-3">
+                            <TableCell className="block self-end px-0 pt-1.5 md:table-cell md:self-auto md:px-0 md:pt-0 md:pr-3">
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className="text-muted-foreground opacity-60 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                                className="h-11 w-11 text-muted-foreground opacity-100 active:bg-destructive/10 active:text-destructive md:h-8 md:w-8 md:opacity-60 md:hover:bg-destructive/10 md:hover:text-destructive md:group-hover:opacity-100"
                                 aria-label="删除这条监控"
                                 disabled={isAdding}
                                 onClick={() => void onRemove(row.target)}
@@ -568,12 +588,11 @@ export default function App() {
                       )}
                     </TableBody>
                   </Table>
-                </ScrollArea>
               </section>
             </div>
 
-            <aside className="flex min-h-0 flex-col gap-4">
-              <section className="grid grid-cols-4 gap-2" aria-label="监控概览">
+            <aside className="flex min-h-0 min-w-0 flex-col gap-4">
+              <section className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="监控概览">
                 <div className="metric-tile">
                   <Radar className="size-4 text-primary" aria-hidden="true" />
                   <span className="metric-value">{ui.rows.length}</span>
@@ -596,7 +615,7 @@ export default function App() {
                 </div>
               </section>
 
-              <section className="surface-panel shrink-0 p-4" aria-labelledby="preferences-title">
+              <section className="surface-panel min-w-0 shrink-0 p-3 sm:p-4" aria-labelledby="preferences-title">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="section-icon" aria-hidden="true"><Settings2 className="size-4" /></div>
                   <div>
@@ -613,6 +632,8 @@ export default function App() {
                     <Input
                       id="interval"
                       type="number"
+                      inputMode="numeric"
+                      enterKeyHint="done"
                       min={5}
                       className="control-surface select-text pr-12 tabular-nums"
                       value={intervalValue}
@@ -634,6 +655,11 @@ export default function App() {
                   <Input
                     id="bark"
                     className="control-surface select-text"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    enterKeyHint="done"
                     placeholder="https://api.day.app/你的BarkKey"
                     value={barkValue}
                     onChange={(event) => setBarkDraft(event.target.value)}
@@ -645,7 +671,8 @@ export default function App() {
                 </div>
 
                 <div className="mt-4 space-y-1 rounded-xl border border-border/55 bg-background/30 p-1">
-                  <div className="setting-row">
+                  {/* 整行做 label，因为 Switch 本身只有 18×32，命中区远低于 44px。 */}
+                  <label htmlFor="sound" className="setting-row cursor-pointer">
                     <span className="flex items-center gap-2 text-sm"><Volume2 className="size-4 text-muted-foreground" aria-hidden="true" />提示音</span>
                     <Switch
                       id="sound"
@@ -653,8 +680,8 @@ export default function App() {
                       checked={ui.settings.soundEnabled}
                       onCheckedChange={(value) => void saveSettings({ soundEnabled: value })}
                     />
-                  </div>
-                  <div className="setting-row gap-3">
+                  </label>
+                  <div className="setting-row flex-wrap gap-2">
                     <Label htmlFor="open-on-hit" className="flex items-center gap-2 text-sm font-normal">
                       <ShoppingBag className="size-4 text-muted-foreground" aria-hidden="true" />到货后打开
                     </Label>
@@ -664,10 +691,13 @@ export default function App() {
                         void saveSettings({ openOnHit: value as OpenOnHit })
                       }
                     >
-                      <SelectTrigger id="open-on-hit" className="h-9 w-[8.5rem] bg-background/45" aria-label="到货后打开">
+                      <SelectTrigger id="open-on-hit" className="h-11 w-auto min-w-0 flex-1 bg-background/45 sm:h-9 sm:w-[8.5rem] sm:flex-none" aria-label="到货后打开">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent align="end">
+                      {/* position="popper" 是故意的：默认的 item-aligned 按选中项对齐、宽度跟触发器，
+                          窄屏 + align="end" 时容易贴边甚至被视口裁掉；popper 模式下宽度不小于触发器
+                          并参与碰壁翻转。桌面下拉的选中项对齐是有意设计，所以不改组件默认值。 */}
+                      <SelectContent position="popper" align="end" sideOffset={4}>
                         <SelectItem value="none">不自动打开</SelectItem>
                         <SelectItem value="bag">购物袋</SelectItem>
                         <SelectItem value="product">商品详情</SelectItem>
@@ -676,7 +706,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <Button variant="outline" className="mt-3 h-10 w-full rounded-xl border-border/70 bg-background/30" onClick={() => void testNotify()}>
+                <Button variant="outline" className="mt-3 h-11 w-full rounded-xl border-border/70 bg-background/30 sm:h-10" onClick={() => void testNotify()}>
                   <BellRing aria-hidden="true" /> 测试提醒与跳转
                 </Button>
               </section>
@@ -689,8 +719,8 @@ export default function App() {
                   </div>
                   <span className="text-[11px] tabular-nums text-muted-foreground">{ui.logs.length} 条</span>
                 </div>
-                <ScrollArea className="min-h-0 flex-1 p-3.5">
-                  <pre className="font-mono text-[11px] leading-[1.65] whitespace-pre-wrap text-muted-foreground select-text">
+                <ScrollArea className="min-h-0 flex-1">
+                  <pre className="p-3.5 font-mono text-[11px] leading-[1.65] wrap-anywhere whitespace-pre-wrap text-muted-foreground select-text">
                     {ui.logs.length === 0 ? "等待监控活动…" : ui.logs.join("\n")}
                   </pre>
                 </ScrollArea>

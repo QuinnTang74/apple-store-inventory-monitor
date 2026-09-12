@@ -4,11 +4,18 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+// containerClassName 是后加的：滚动职责必须落在这层（它才是 thead 最近的滚动容器，
+// 表格自带的 overflow-x:auto 会把 overflow-y 一并算成 auto，于是 sticky 吸附相对它生效）。
+// 调用方把高度约束（flex-1 / min-h-0）传进来，横滚与吸附才真正可用。
+function Table({
+  className,
+  containerClassName,
+  ...props
+}: React.ComponentProps<"table"> & { containerClassName?: string }) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className={cn("relative w-full overflow-x-auto", containerClassName)}
     >
       <table
         data-slot="table"

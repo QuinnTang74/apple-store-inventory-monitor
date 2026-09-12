@@ -113,9 +113,30 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    overflow-x: hidden;
     user-select: none;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, system-ui, sans-serif;
+  }
+
+  /* 溢出裁切只在桌面窗口内保留（原行为）。窄屏不再裁切：裁掉才是真正的问题 ——
+     内容既看不见也滑不到；宁可让它暴露出来被验收探针抓住。 */
+  @media (min-width: 980px) {
+    body {
+      overflow-x: hidden;
+    }
+  }
+
+  /* 触屏：去掉 300ms 双击缩放延迟与点击高亮。 */
+  button,
+  [role="button"],
+  a,
+  label,
+  input,
+  select {
+    touch-action: manipulation;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
   }
 
   button,
@@ -150,7 +171,7 @@
   }
 
   .status-pill {
-    @apply flex h-10 items-center gap-2 rounded-xl border border-border/65 bg-background/35 px-3;
+    @apply flex h-11 items-center gap-2 rounded-xl border border-border/65 bg-background/35 px-3 sm:h-10;
   }
 
   .eyebrow {
@@ -170,7 +191,14 @@
   }
 
   .control-surface {
-    @apply h-10 rounded-xl border-border/70 bg-background/40 px-3 shadow-none transition-colors hover:border-primary/35 hover:bg-background/60 focus-visible:border-primary/60;
+    @apply h-11 rounded-xl border-border/70 bg-background/40 px-3 shadow-none transition-colors focus-visible:border-primary/60 sm:h-10;
+  }
+
+  /* 这两处是原生 :hover，不受 Tailwind 的 @media (hover: hover) 保护，触屏点一下会粘住高亮。 */
+  @media (hover: hover) {
+    .control-surface:hover {
+      @apply border-primary/35 bg-background/60;
+    }
   }
 
   .metric-tile {
@@ -186,7 +214,13 @@
   }
 
   .setting-row {
-    @apply flex min-h-10 items-center justify-between rounded-lg px-2.5 transition-colors hover:bg-muted/45;
+    @apply flex min-h-11 items-center justify-between rounded-lg px-2.5 transition-colors sm:min-h-10;
+  }
+
+  @media (hover: hover) {
+    .setting-row:hover {
+      @apply bg-muted/45;
+    }
   }
 
 }

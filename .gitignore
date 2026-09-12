@@ -29,3 +29,6 @@ pnpm-debug.log*
 
 # 生成快照的脚本留下的字节码缓存
 __pycache__/
+
+# lrnev 治理工作区（本地数据，不入库）
+.lrnev/

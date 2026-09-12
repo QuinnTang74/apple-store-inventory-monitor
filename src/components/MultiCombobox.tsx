@@ -82,6 +82,8 @@ export function MultiCombobox({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          role="combobox"
+          aria-expanded={open}
           aria-label={`${placeholder}，${selectedOptions.length === 0 ? "尚未选择" : triggerText}`}
           disabled={disabled}
           className={cn("justify-between font-normal", className)}
@@ -97,8 +99,10 @@ export function MultiCombobox({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-auto min-w-(--radix-popover-trigger-width) max-w-[min(90vw,42rem)] p-0"
+        className="max-h-(--radix-popover-content-available-height) w-auto min-w-(--radix-popover-trigger-width) max-w-[min(calc(100vw-2rem),42rem)] overflow-hidden overscroll-contain p-0"
         align="start"
+        sideOffset={6}
+        collisionPadding={8}
       >
         <div className="flex items-center gap-2 rounded-t-md border-b px-3 focus-within:ring-2 focus-within:ring-ring/50 focus-within:ring-inset">
           <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -107,11 +111,11 @@ export function MultiCombobox({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder.replace("…", "")}
-            className="h-10 border-0 px-0 shadow-none focus-visible:ring-0"
+            className="h-11 border-0 px-0 text-base shadow-none focus-visible:ring-0 sm:h-10 md:text-sm"
           />
         </div>
 
-        <div className="flex min-h-10 items-center justify-between gap-3 border-b px-3 py-1.5">
+        <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b px-3 py-1.5">
           <span className="text-xs text-muted-foreground" aria-live="polite">
             已选 {selectedOptions.length} / {options.length}
           </span>
@@ -138,7 +142,7 @@ export function MultiCombobox({
         </div>
 
         <fieldset
-          className="max-h-[300px] overflow-x-hidden overflow-y-auto p-1"
+          className="max-h-[min(300px,45vh)] overflow-x-hidden overflow-y-auto p-1"
           aria-label={placeholder}
         >
           {filtered.length === 0 ? (
@@ -150,7 +154,7 @@ export function MultiCombobox({
                 <label
                   key={option.value}
                   htmlFor={optionId}
-                  className="flex min-h-10 cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent focus-within:bg-accent"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-accent focus-within:bg-accent sm:min-h-10"
                 >
                   <Checkbox
                     id={optionId}
